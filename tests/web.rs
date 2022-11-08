@@ -35,5 +35,5 @@ pub fn test_tick() {
     let expected_universe = expected_spaceship();
 
     input_universe.tick();
-    assert_eq!( &input_universe.get_cells(), &expected_universe.get_cells());
+    assert_eq!(&input_universe.get_cells(), &expected_universe.get_cells());
 }
