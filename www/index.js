@@ -17,6 +17,8 @@ canvas.width = (CELL_SIZE + 1) * width + 1;
 const ctx = canvas.getContext('2d');
 
 const renderLoop = () => {
+    fps.render();
+
     universe.tick();
 
     drawGrid();
@@ -73,3 +75,41 @@ const drawCells = () => {
 
     ctx.stroke();
 };
+
+const fps = new class {
+    constructor () {
+        this.fps = document.getElementById("fps");
+        this.frames = [];
+        this.lastFrameThisStamp = performance.now();
+    }
+
+    render () {
+        const now = performance.now();
+        const delta = now - this.lastFrameThisStamp;
+        this.lastFrameThisStamp = now;
+        const fps = 1 / delta * 1000;
+
+        this.frames.push(fps);
+        if ( this.frames.length > 100 ) {
+            this.frames.shift();
+        }
+
+        let min = Infinity;
+        let max = -Infinity;
+        let sum = 0;
+        for ( let i = 0; i < this.frames.length; i++ ) {
+            sum += this.frames[i];
+            min = Math.min( this.frames[i], min );
+            max = Math.max( this.frames[i], max );
+        }
+        let mean = sum / this.frames.length;
+
+        this.fps.textContent = `
+            Frame per Second:
+                latest = ${Math.round(fps)}
+                avg of last = ${Math.round(mean)}
+                min of last = ${Math.round(min)}
+                max of last = ${Math.round(max)}
+        `.trim();
+    }
+}
