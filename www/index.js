@@ -16,18 +16,62 @@ canvas.width = (CELL_SIZE + 1) * width + 1;
 
 const ctx = canvas.getContext('2d');
 
+let animationId = null;
+
 const renderLoop = () => {
     fps.render();
+    for ( let i = 0; i < 9; i++ ) {
+        universe.tick();
+    }
+    
+    drawGrid();
+    drawCells();
+    
+    animationId = requestAnimationFrame(renderLoop);
+}
 
-    universe.tick();
+const isPaused = () => {
+    return animationId === null;
+}
+
+const playPauseButton = document.getElementById("play-pause");
+
+const play = () => {
+    playPauseButton.textContent = "⏸";
+    renderLoop();
+};
+
+const pause = () => {
+    playPauseButton.textContent = "⏩";
+    cancelAnimationFrame(animationId);
+    animationId = null;
+};
+
+playPauseButton.addEventListener("click", _ => {
+   if ( isPaused() ) {
+        play();
+   } else {
+        pause();
+   }
+});
+
+canvas.addEventListener("click", event => {
+    const boundingRect = canvas.getBoundingClientRect();
+
+    const scaleX = canvas.width / boundingRect.width;
+    const scaleY = canvas.height / boundingRect.height;
+
+    const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
+    const canvasTop = (event.clientY - boundingRect.top) * scaleY;
+
+    const row = Math.min( Math.floor( canvasTop / (CELL_SIZE + 1)), height - 1);
+    const col = Math.min( Math.floor( canvasLeft / (CELL_SIZE + 1)), width - 1);
+
+    universe.toggle_cell(row, col);
 
     drawGrid();
     drawCells();
-
-    requestAnimationFrame(renderLoop);
-}
-
-requestAnimationFrame(renderLoop);
+});
 
 const drawGrid = () => {
     ctx.beginPath();
@@ -56,17 +100,53 @@ const drawCells = () => {
 
     ctx.beginPath();
 
-    for ( let row = 0; row < height; row++ ) {
-        for ( let col = 0; col < width; col++) {
-            const idx = getIndex(row, col);
+    // for ( let row = 0; row < height; row++ ) {
+    //     for ( let col = 0; col < width; col++) {
+    //         const idx = getIndex(row, col);
 
-            ctx.fillStyle = cells[idx] === Cell.Dead
-                ? DEAD_COLOR
-                : ALIVE_COLOR;
+    //         ctx.fillStyle = cells[idx] === Cell.Dead
+    //             ? DEAD_COLOR
+    //             : ALIVE_COLOR;
+
+    //         ctx.fillRect(
+    //             col * (CELL_SIZE + 1) + 1,
+    //             row * (CELL_SIZE + 1) + 1,
+    //             CELL_SIZE,
+    //             CELL_SIZE
+    //         );
+    //     }
+    // }
+    
+    // Alive cells
+    ctx.fillStyle = ALIVE_COLOR;
+    for ( let row = 0; row < height; row++ ) {
+        for ( let col = 0; col < width; col++ ) {
+            const idx = getIndex(row, col);
+            if ( cells[idx] !== Cell.Alive ) {
+                continue;
+            }
 
             ctx.fillRect(
-                col * (CELL_SIZE + 1) + 1,
-                row * (CELL_SIZE + 1) + 1,
+                col * ( CELL_SIZE + 1 ) + 1,  
+                row * ( CELL_SIZE + 1 ) + 1,
+                CELL_SIZE,
+                CELL_SIZE
+            );
+        }
+    }
+
+    // Dead cells
+    ctx.fillStyle = DEAD_COLOR;
+    for ( let row = 0; row < height; row++ ) {
+        for ( let col = 0; col < width; col++ ) {
+            const idx = getIndex(row, col);
+            if ( cells[idx] !== Cell.Dead ) {
+                continue;
+            }
+
+            ctx.fillRect(
+                col * ( CELL_SIZE + 1 ) + 1,  
+                row * ( CELL_SIZE + 1 ) + 1,
                 CELL_SIZE,
                 CELL_SIZE
             );
@@ -113,3 +193,5 @@ const fps = new class {
         `.trim();
     }
 }
+
+play();
